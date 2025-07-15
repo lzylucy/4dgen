@@ -1,0 +1,365 @@
+name: train_video_diffusion
+
+defaults:
+  - task: video-gen
+  - _self_
+
+task_name: ${task.name}
+shape_meta: ${task.shape_meta}
+exp_name: "default"
+
+_target_: workspace.finetune_svd_lightning_workspace.FinetuneSVDLightningWorkspace
+
+horizon: 11
+n_obs_steps: 11
+n_action_steps: 0
+n_latency_steps: 0
+past_action_visible: False
+keypoint_visible_rate: 1.0
+obs_as_global_cond: True
+
+model:
+  base_learning_rate: 1.0e-6
+  target: sgm.models.diffusion.DiffusionEngine
+  params:
+    scale_factor: 0.18215
+    disable_first_stage_autocast: True
+    disable_loss_fn_autocast: True
+    input_mv_keys: ["pointmap", "pointmap_right"]
+    # NEEDS OVERWRITE: replace with your pre-trained SVD checkpoint path
+    ckpt_path: /fsx-siro/liuzeyi/4dgen/checkpoints/svd.safetensors
+    use_ema: False
+    ema_decay_rate: 0.9999
+    en_and_decode_n_samples_a_time: 10
+    ft_strategy: everything
+
+    optimizer_config:
+      target: torch.optim.Adam
+
+    # scheduler_config:
+    #   target: sgm.lr_scheduler.LambdaLinearScheduler
+    #   params:
+    #     warm_up_steps: [10000]
+    #     cycle_lengths: [10000000000000]
+    #     f_start: [1.e-6]
+    #     f_max: [1.]
+    #     f_min: [1.]
+
+    denoiser_config:
+      target: sgm.modules.diffusionmodules.denoiser.Denoiser
+      params:
+        scaling_config:
+          target: sgm.modules.diffusionmodules.denoiser_scaling.VScalingWithEDMcNoise
+
+    network_config:
+      target: sgm.modules.diffusionmodules.video_model.VideoUNet
+      params:
+        adm_in_channels: 768
+        num_classes: null
+        use_checkpoint: True
+        in_channels: 8
+        out_channels: 4
+        model_channels: 320
+        attention_resolutions: [4, 2, 1]
+        num_res_blocks: 2
+        channel_mult: [1, 2, 4, 4]
+        num_head_channels: 64
+        use_linear_in_transformer: True
+        transformer_depth: 1
+        context_dim: 1024
+        spatial_transformer_attn_type: softmax-xformers
+        extra_ff_mix_layer: True
+        use_spatial_context: True
+        merge_strategy: learned_with_images
+        video_kernel_size: [3, 1, 1]
+        share_decoder_weights: False
+        use_attn_encoder: False
+        use_attn_mid: False
+        use_attn_decoder: True
+
+    conditioner_config:
+      target: sgm.modules.GeneralConditioner
+      params:
+        emb_models:
+        - input_keys: [cond_images_without_noise, cond_images_without_noise_right]
+          is_trainable: False
+          ucg_rate: 0.1
+          target: sgm.modules.encoders.modules.FrozenOpenCLIPImagePredictionEmbedder
+          params:
+            n_cond_frames: 1
+            n_copies: 1
+            open_clip_embedding_config:
+              target: sgm.modules.encoders.modules.FrozenOpenCLIPImageEmbedder
+              params:
+                freeze: True
+                num_image_crops: 10
+
+        - input_keys: [cond_pointmaps_without_noise, cond_pointmaps_without_noise_right]
+          is_trainable: False
+          ucg_rate: 0.1
+          target: sgm.modules.encoders.modules.VideoPredictionEmbedderWithEncoder
+          params:
+            disable_encoder_autocast: True  # NOTE: This is currently overwritten by disable_first_stage_autocast.
+            en_and_decode_n_samples_a_time: 10
+            n_cond_frames: 1
+            n_copies: 1
+            is_ae: True
+            encoder_config:
+              target: sgm.models.autoencoder.AutoencoderKLModeOnly
+              params:
+                embed_dim: 4
+                # NEEDS OVERWRITE: replace with your pre-trained pointmap VAE checkpoint path
+                ckpt_path: /fsx-siro/liuzeyi/4dgen/checkpoints/vae/StoreCerealBoxUnderShelf/pointmap.ckpt
+                monitor: val/rec_loss
+                ddconfig:
+                  attn_type: vanilla-xformers
+                  double_z: True
+                  z_channels: 4
+                  resolution: 256
+                  in_channels: 3
+                  out_ch: 3
+                  ch: 128
+                  ch_mult: [1, 2, 4, 4]
+                  num_res_blocks: 2
+                  attn_resolutions: []
+                  dropout: 0.0
+                lossconfig:
+                  target: torch.nn.Identity
+
+        - input_keys: [cond_images_without_noise, cond_images_without_noise_right]
+          is_trainable: False
+          ucg_rate: 0.1
+          target: sgm.modules.encoders.modules.VideoPredictionEmbedderWithEncoder
+          params:
+            disable_encoder_autocast: True  # NOTE: This is currently overwritten by disable_first_stage_autocast.
+            en_and_decode_n_samples_a_time: 10
+            n_cond_frames: 1
+            n_copies: 1
+            is_ae: True
+            encoder_config:
+              target: sgm.models.autoencoder.AutoencoderKLModeOnly
+              params:
+                embed_dim: 4
+                # NEEDS OVERWRITE: replace with your pre-trained RGB VAE checkpoint path
+                ckpt_path: /fsx-siro/liuzeyi/4dgen/checkpoints/vae/StoreCerealBoxUnderShelf/rgb.ckpt
+                monitor: val/rec_loss
+                ddconfig:
+                  attn_type: vanilla-xformers
+                  double_z: True
+                  z_channels: 4
+                  resolution: 256
+                  in_channels: 3
+                  out_ch: 3
+                  ch: 128
+                  ch_mult: [1, 2, 4, 4]
+                  num_res_blocks: 2
+                  attn_resolutions: []
+                  dropout: 0.0
+                lossconfig:
+                  target: torch.nn.Identity
+
+    # (not used during training)
+    sampler_config:
+      target: sgm.modules.diffusionmodules.sampling.EulerEDMSampler
+      params:
+        num_steps: 25
+
+        discretization_config:
+          target: sgm.modules.diffusionmodules.discretizer.EDMDiscretization
+          params:
+            sigma_max: 700.0
+
+        guider_config:
+          target: sgm.modules.diffusionmodules.guiders.LinearPredictionGuider
+          params:
+            num_frames: 10
+            max_scale: 2.5
+            min_scale: 1.0
+
+    loss_fn_config:
+      target: sgm.modules.diffusionmodules.loss.StandardDiffusionLoss
+      params:
+        harmonize_sigmas: True  # Important for diffusion timestep consistency!
+        # Analogous to "additional_model_inputs" in simple_video_sample.py
+        batch2model_keys: ["image_only_indicator", "num_video_frames"]
+
+        # Evidence:
+        #   Appendix D.2:
+        #     "...which can be recovered in the EDM framework [48] by setting σdata = 1)"
+        loss_weighting_config:
+          target: sgm.modules.diffusionmodules.loss_weighting.EDMWeighting
+          params:
+            sigma_data: 1.0
+
+        # Evidence:
+        # Appendix D.4:
+        #   " We train both models for 50k iterations at a batch size of 768, learning rate 
+        #    3 × 10−5, and set Pmean = 1.0 and Pstd = 1.6. "
+        sigma_sampler_config:
+          target: sgm.modules.diffusionmodules.sigma_sampling.EDMSampling
+          params:
+            p_mean: 1.0
+            p_std: 1.6
+
+    first_stage_pointmap_config:
+      target: sgm.models.autoencoder.AutoencodingEngine
+      params:
+        loss_config:
+          target: torch.nn.Identity
+        regularizer_config:
+          target: sgm.modules.autoencoding.regularizers.DiagonalGaussianRegularizer
+        encoder_config: 
+          target: sgm.modules.diffusionmodules.model.Encoder
+          params:
+            attn_type: vanilla
+            double_z: True
+            z_channels: 4
+            resolution: 256
+            in_channels: 3
+            out_ch: 3
+            ch: 128
+            ch_mult: [1, 2, 4, 4]
+            num_res_blocks: 2
+            attn_resolutions: []
+            dropout: 0.0
+        decoder_config:
+          target: sgm.modules.autoencoding.temporal_ae.VideoDecoder
+          params:
+            attn_type: vanilla
+            double_z: True
+            z_channels: 4
+            resolution: 256
+            in_channels: 3
+            out_ch: 3
+            ch: 128
+            ch_mult: [1, 2, 4, 4]
+            num_res_blocks: 2
+            attn_resolutions: []
+            dropout: 0.0
+            video_kernel_size: [3, 1, 1]
+        # NEEDS OVERWRITE: replace with your pre-trained pointmap VAE checkpoint path
+        ckpt_path: /fsx-siro/liuzeyi/4dgen/checkpoints/vae/StoreCerealBoxUnderShelf/pointmap.ckpt
+    
+    first_stage_color_config:
+      target: sgm.models.autoencoder.AutoencodingEngine
+      params:
+        loss_config:
+          target: torch.nn.Identity
+        regularizer_config:
+          target: sgm.modules.autoencoding.regularizers.DiagonalGaussianRegularizer
+        encoder_config: 
+          target: sgm.modules.diffusionmodules.model.Encoder
+          params:
+            attn_type: vanilla
+            double_z: True
+            z_channels: 4
+            resolution: 256
+            in_channels: 3
+            out_ch: 3
+            ch: 128
+            ch_mult: [1, 2, 4, 4]
+            num_res_blocks: 2
+            attn_resolutions: []
+            dropout: 0.0
+        decoder_config:
+          target: sgm.modules.autoencoding.temporal_ae.VideoDecoder
+          params:
+            attn_type: vanilla
+            double_z: True
+            z_channels: 4
+            resolution: 256
+            in_channels: 3
+            out_ch: 3
+            ch: 128
+            ch_mult: [1, 2, 4, 4]
+            num_res_blocks: 2
+            attn_resolutions: []
+            dropout: 0.0
+            video_kernel_size: [3, 1, 1]
+        # NEEDS OVERWRITE: replace with your pre-trained RGB VAE checkpoint path
+        ckpt_path: /fsx-siro/liuzeyi/4dgen/checkpoints/vae/StoreCerealBoxUnderShelf/rgb.ckpt
+
+dataloader:
+  batch_size: 1
+  num_workers: 16
+  shuffle: True
+  pin_memory: True
+  persistent_workers: True
+
+val_dataloader:
+  batch_size: 1
+  num_workers: 16
+  shuffle: False
+  pin_memory: True
+  persistent_workers: True
+
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 0.0001 # 1e-4
+  betas: [0.95, 0.999]
+  eps: 0.00000001 # 1e-8
+  weight_decay: 0.000001 # 1e-6
+
+training:
+  # NEEDS OVERWRITE: replace with your output directory
+  output_dir: /fsx-siro/liuzeyi/4dgen/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+  device: -1 # Use all available GPUs.
+  num_nodes: 1  # Number of computers to be used for a multi-node training.
+  seed: 42
+  debug: False
+  # optimization
+  lr_scheduler: cosine
+  lr_warmup_steps: 50
+  ############################
+  # can be `epoch` or `step`
+  lr_step_interval: "epoch"
+  # uncomment this to manually set total number of steps for lr scheduler
+  # lr_total_steps: int
+  ############################
+  # uncomment the following block to enable per parameter group lr scaling,
+  # this can be useful to finetune the visual backbone part with lower lr.
+  # this dict maps keyword in module name to lr scale
+  # lr_scale_for_grouped_params:
+  #  obs_encoder: 0.1
+  num_epochs: 1000
+  gradient_accumulate_every: 4
+  gradient_clip_val: 1.0
+  gradient_clip_algorithm: norm
+  use_ema: false
+  precision: 32
+  strategy: ddp
+  # end 2 end
+  freeze_encoder: False
+  train_with_features: False
+  # training loop control
+  # in epochs
+  rollout_every: 50
+  checkpoint_every: 50
+  periodic_save: 100
+  val_every: 1000
+  # if true, only does validation every `val_every` training step instead.
+  val_per_step: true
+  sample_every: 5
+  # steps per epoch
+  max_train_steps: null
+  max_val_steps: 1
+  # misc
+  tqdm_interval_sec: 1.0
+
+# passed to wandb.init()
+logging:
+  project: video-gen
+  mode: online
+  name: ${now:%Y.%m.%d-%H.%M.%S}_${name}_${task_name}
+  tags: ["${name}", "${task_name}", "${exp_name}", "pl", "batch_scaling"]
+
+checkpoint:
+  topk:
+    monitor_key: train_loss
+    mode: min
+    k: 3
+    format_str: '{epoch:03d}-{train_loss:.6f}'
+  save_last_ckpt: False
+  save_last_snapshot: False
+  every_n_epoch: 10
+  log_prediction_sample: true

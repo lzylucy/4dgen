@@ -1,0 +1,159 @@
+name: finetune_video_diffusion_autoencoder
+
+defaults:
+  - task: recon
+  - _self_
+
+task_name: ${task.name}
+shape_meta: ${task.shape_meta}
+exp_name: "default"
+
+_target_: workspace.finetune_autoencoder_workspace.FinetuneAutoEncoderWorkspace
+
+horizon: 10
+n_obs_steps: 0
+n_action_steps: 0
+n_latency_steps: 0
+past_action_visible: False
+keypoint_visible_rate: 1.0
+obs_as_global_cond: True
+
+model:
+  target: sgm.models.autoencoder.AutoencodingEngine
+  params:
+    learning_rate: 1e-5
+    input_mv_keys: [pointmap, pointmap_right]
+    disc_start_iter: 10001
+    # NEEDS OVERWRITE: replace with your pre-trained VAE checkpoint path
+    ckpt_path: /projects/m000073/liuzeyi/4dgen/checkpoints/ae.safetensors
+    freeze_encoder: False
+
+    loss_config:
+      target: sgm.modules.autoencoding.losses.GeneralLPIPSWithDiscriminator
+      params:
+        perceptual_weight: 0.0
+        disc_start: 10001
+        disc_weight: 0.0
+        learn_logvar: True
+
+        regularization_weights:
+          kl_loss: 0.0
+
+    regularizer_config:
+      target: sgm.modules.autoencoding.regularizers.DiagonalGaussianRegularizer
+    
+    encoder_config: 
+      target: sgm.modules.diffusionmodules.model.Encoder
+      params:
+        attn_type: vanilla
+        double_z: True
+        z_channels: 4
+        resolution: 256
+        in_channels: 3
+        out_ch: 3
+        ch: 128
+        ch_mult: [1, 2, 4, 4]
+        num_res_blocks: 2
+        attn_resolutions: []
+        dropout: 0.0
+        resamp_with_conv: true
+    decoder_config:
+      target: sgm.modules.autoencoding.temporal_ae.VideoDecoder
+      params:
+        attn_type: vanilla
+        double_z: True
+        z_channels: 4
+        resolution: 256
+        in_channels: 3
+        out_ch: 3
+        ch: 128
+        ch_mult: [1, 2, 4, 4]
+        num_res_blocks: 2
+        attn_resolutions: []
+        dropout: 0.0
+        resamp_with_conv: true
+        video_kernel_size: [3, 1, 1]
+
+dataloader:
+  # `batch_size` is optimized for p5 or p4de machines with 80Gb memory.
+  batch_size: 1
+  num_workers: 16
+  shuffle: True
+  pin_memory: True
+  persistent_workers: True
+
+val_dataloader:
+  # `batch_size` is optimized for p5 or p4de machines with 80Gb memory.
+  batch_size: 1
+  num_workers: 16
+  shuffle: True
+  pin_memory: True
+  persistent_workers: True
+
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 0.0001 # 1e-4
+  betas: [0.95, 0.999]
+  eps: 0.00000001 # 1e-8
+  weight_decay: 0.000001 # 1e-6
+
+training:
+  output_dir: /projects/m000073/liuzeyi/4dgen/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+  device: -1 # Use all available GPUs.
+  num_nodes: 1  # Number of computers to be used for a multi-node training.
+  seed: 42
+  debug: False
+  # optimization
+  lr_scheduler: cosine
+  lr_warmup_steps: 50
+  ############################
+  # can be `epoch` or `step`
+  lr_step_interval: "epoch"
+  # uncomment this to manually set total number of steps for lr scheduler
+  # lr_total_steps: int
+  ############################
+  # uncomment the following block to enable per parameter group lr scaling,
+  # this can be useful to finetune the visual backbone part with lower lr.
+  # this dict maps keyword in module name to lr scale
+  # lr_scale_for_grouped_params:
+  #  obs_encoder: 0.1
+  num_epochs: 1000
+  gradient_accumulate_every: 1
+  use_ema: false
+  precision: 16
+  strategy: ddp
+  # end 2 end
+  freeze_encoder: False
+  train_with_features: False
+  # training loop control
+  # in epochs
+  rollout_every: 50
+  checkpoint_every: 50
+  periodic_save: 100
+  val_every: 500
+  # if true, only does validation every `val_every` training step instead.
+  val_per_step: true
+  sample_every: 5
+  # steps per epoch
+  max_train_steps: null
+  max_val_steps: 1
+  # misc
+  tqdm_interval_sec: 1.0
+
+# passed to wandb.init()
+logging:
+  project: video-vae
+  mode: online
+  name: ${now:%Y.%m.%d-%H.%M.%S}_${name}_${task_name}
+  tags: ["${name}", "${task_name}", "${exp_name}", "pl", "batch_scaling"]
+
+checkpoint:
+  topk:
+    monitor_key: val/loss/rec
+    mode: min
+    k: 3
+    format_str: '{epoch:03d}-{val/loss/rec:.6f}'
+  save_last_ckpt: False
+  save_last_snapshot: False
+  every_n_epoch: 10
+  log_prediction_sample: true

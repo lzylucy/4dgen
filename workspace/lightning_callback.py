@@ -1,0 +1,143 @@
+import os
+import wandb
+import numpy as np
+import torch
+
+from pytorch_lightning import Callback
+
+from common.path_util import resolve_path
+from imgaug.augmentables.heatmaps import HeatmapsOnImage
+from imgaug.augmentables.segmaps import SegmentationMapsOnImage
+
+def unnormalize(input, min, max):
+    return torch.clamp(((input + 1.) / 2.) * (max - min) + min, min, max)
+
+
+class PeriodicCheckpointCB(Callback):
+    """
+    Saves pl checkpoint periodically and when keyboard interrupted.
+    The pl pytorch_lightning.callbacks.ModelCheckpoint doesn't really do
+    periodic saving. It rather checks on some metric periodically, saves
+    the best, and removes the old ones.
+    """
+
+    def __init__(
+        self,
+        period,
+        save_dir,
+        *,
+        verbose=False,
+        format="epoch_{epoch}-step_{step}.ckpt",
+    ):
+        self._period = period
+        self._save_dir = save_dir
+        self._verbose = verbose
+        self._format = format
+
+    def _save(self, trainer):
+
+        epoch = trainer.current_epoch
+        step = trainer.global_step
+        relpath = self._format.format(epoch=epoch, step=step)
+        ckpt_path = os.path.join(self._save_dir, relpath)
+
+        # Only make the checkpoint directory for global rank 0 since that is
+        # the only rank that will actually save a checkpoint. The other ranks
+        # will have different ckpt_path and create unnecessary unused dirs.
+        if trainer.global_rank == 0:
+            os.makedirs(self._save_dir, exist_ok=True)
+
+        # This should do nothing for trainer.global_rank != 0, but needs to be
+        # called for all rank to enable proper syncing (apparently).
+        trainer.save_checkpoint(ckpt_path)
+        if self._verbose and trainer.global_rank == 0:
+            print(f"  {type(self)}: Saved to {ckpt_path}")
+
+
+class SaveEveryNEpoch(PeriodicCheckpointCB):
+    """
+    Since PL's training loop calls this at the end of the validation step,
+    using this callback can result in more than intended number of checkpoints
+    being saved. For example, if you configure `val_check_interval` to be less
+    than number of training batches per epoch, this callback will be called
+    multiple times per epoch.
+    """
+
+    def on_train_epoch_end(self, trainer, pl_module):
+        epoch = trainer.current_epoch
+        step = trainer.global_step
+
+        if (
+            not isinstance(self._period, str)
+            and step != 0
+            and (epoch % self._period == 0)
+        ):
+            self._save(trainer)
+
+
+class SaveEveryNStep(PeriodicCheckpointCB):
+    def on_train_batch_end(
+        self,
+        trainer,
+        pl_module,
+        outputs,
+        batch,
+        batch_idx,
+    ):
+        step = trainer.global_step
+        if (
+            step != 0
+            and not isinstance(self._period, str)
+            and step % self._period == 0
+        ):
+            self._save(trainer)
+
+class LogPredictionSample(Callback):
+
+    def on_validation_batch_end(
+        self, trainer, pl_module, outputs, batch, batch_idx
+    ):
+        """Called when the validation batch ends."""
+
+        # `outputs` comes from `LightningModule.validation_step`
+        # which corresponds to our model predictions in this case
+        
+        N, C, H, W = outputs['video_dict']['gt_video_right'].shape
+        
+        if wandb.run is not None:
+            for idx in [0, -1]:
+                # (n_frames, C, H, W)
+                val_pointmap_right = unnormalize(outputs['video_dict']['sampled_video_right'][idx][:3], -1, 2).permute(1, 2, 0).reshape(-1, 3).cpu().detach()   
+                val_pointmap_left = unnormalize(outputs['video_dict']['sampled_video_left'][idx][:3], -1, 2).permute(1, 2, 0).reshape(-1, 3).cpu().detach()
+                
+                val_color_right = unnormalize(outputs['video_dict']['sampled_video_right'][idx][3:], 0, 255).permute(1, 2, 0).reshape(-1, 3).cpu().detach()
+                val_color_left = unnormalize(outputs['video_dict']['sampled_video_left'][idx][3:], 0, 255).permute(1, 2, 0).reshape(-1, 3).cpu().detach()
+                
+                val_pointmap_left_colored = torch.cat([val_pointmap_left, val_color_left], dim=-1)
+                val_pointmap_right_colored = torch.cat([val_pointmap_right, val_color_right], dim=-1)
+                
+                recon_pointmap_right = unnormalize(outputs['target_reconstructions'][1][idx][:3], -1, 2).permute(1, 2, 0).reshape(-1, 3).cpu().detach()
+                recon_pointmap_left = unnormalize(outputs['target_reconstructions'][0][idx][:3], -1, 2).permute(1, 2, 0).reshape(-1, 3).cpu().detach()
+                
+                recon_color_right = unnormalize(outputs['target_reconstructions'][1][idx][3:], 0, 255).permute(1, 2, 0).reshape(-1, 3).cpu().detach()
+                recon_color_left = unnormalize(outputs['target_reconstructions'][0][idx][3:], 0, 255).permute(1, 2, 0).reshape(-1, 3).cpu().detach()
+                
+                recon_pointmap_right_colored = torch.cat([recon_pointmap_right, recon_color_right], dim=-1)
+                recon_pointmap_left_colored = torch.cat([recon_pointmap_left, recon_color_left], dim=-1)
+                
+                frame_name = 'first' if idx == 0 else 'last'
+                pred_right = torch.cat([recon_pointmap_right_colored, val_pointmap_right_colored], dim=0)
+                pred_left = torch.cat([recon_pointmap_left_colored, val_pointmap_left_colored], dim=0)
+                wandb.log({f"val/right/{frame_name}/pred_pointmap_overlay": wandb.Object3D(np.array(pred_right))})
+                wandb.log({f"val/left/{frame_name}/pred_pointmap_overlay": wandb.Object3D(np.array(pred_left))})
+                
+                wandb.log({f"val/right/{frame_name}/pred_pointmap": wandb.Object3D(np.array(val_pointmap_right_colored))})
+                wandb.log({f"val/left/{frame_name}/pred_pointmap": wandb.Object3D(np.array(val_pointmap_left_colored))})
+                wandb.log({f"val/right/{frame_name}/recon_pointmap": wandb.Object3D(np.array(recon_pointmap_right_colored))})
+                wandb.log({f"val/left/{frame_name}/recon_pointmap": wandb.Object3D(np.array(recon_pointmap_left_colored))})
+
+                wandb.log({f"val/right/{frame_name}/pred_pointmap_mse": torch.mean(torch.square(recon_pointmap_right - val_pointmap_right))})
+                wandb.log({f"val/left/{frame_name}/pred_pointmap_mse": torch.mean(torch.square(recon_pointmap_left - val_pointmap_left))})
+                
+                wandb.log({f"val/right/{frame_name}/pred_color_mse": torch.mean(torch.square(recon_color_right - val_color_right))})
+                wandb.log({f"val/left/{frame_name}/pred_color_mse": torch.mean(torch.square(recon_color_left - val_color_left))})
