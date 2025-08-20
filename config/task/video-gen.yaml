@@ -65,8 +65,13 @@ shape_meta: &shape_meta
 task_name: &task_name bimanual_video_gen
 dataset_path: &dataset_path [
   # NEEDS OVERWRITE: add episode folders here, for example:
-  /fsx-siro/liuzeyi/4dgen/data/BimanualStoreCerealBoxUnderShelf/2025-03-13T04-19-57+00-00/diffusion_spartan/episode_*,
-  /fsx-siro/liuzeyi/4dgen/data/BimanualStoreCerealBoxUnderShelf/2025-03-13T08-14-05+00-00/diffusion_spartan/episode_*
+  # /fsx-siro/liuzeyi/4dgen/data/BimanualPutSpatulaOnTableFromUtensilCrock/2025-03-29T06-34-17+00-00/diffusion_spartan/episode_*,
+  # /fsx-siro/liuzeyi/4dgen/data/BimanualPutSpatulaOnTableFromUtensilCrock/2025-03-29T07-14-47+00-00/diffusion_spartan/episode_*,
+  # /fsx-siro/liuzeyi/4dgen/data/BimanualPutSpatulaOnTableFromUtensilCrock/2025-06-28T02-31-28+00-00/diffusion_spartan/episode_*,
+  # /fsx-siro/liuzeyi/4dgen/data/BimanualPutSpatulaOnTableFromUtensilCrock/2025-06-28T02-57-05+00-00/diffusion_spartan/episode_*,
+  /fsx-siro/liuzeyi/4dgen/data/BimanualPlaceAppleFromBowlIntoBin/2025-03-29T08-08-56+00-00/diffusion_spartan/episode_*,
+  /fsx-siro/liuzeyi/4dgen/data/BimanualPlaceAppleFromBowlIntoBin/2025-04-08T02-26-26+00-00/diffusion_spartan/episode_*,
+  /fsx-siro/liuzeyi/4dgen/data/BimanualPlaceAppleFromBowlIntoBin/2025-06-27T21-47-33+00-00/diffusion_spartan/episode_*,
   ]
 
 dataset:
@@ -88,7 +93,7 @@ dataset:
   imagenet_normalization: False
 
   mode: "zarr"
-  replay_buffer_path: /fsx-siro/liuzeyi/4dgen/data/single_task/store_cereal_box_under_shelf/replay_buffer.zarr
+  replay_buffer_path: /fsx-siro/liuzeyi/4dgen/data/single_task/place_apple_from_bowl_into_bin/replay_buffer.zarr
 
   compressor: "blosc"
   is_multiarm: true

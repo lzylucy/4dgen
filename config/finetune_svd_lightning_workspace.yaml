@@ -19,7 +19,7 @@ keypoint_visible_rate: 1.0
 obs_as_global_cond: True
 
 model:
-  base_learning_rate: 1.0e-6
+  base_learning_rate: 1.0e-8
   target: sgm.models.diffusion.DiffusionEngine
   params:
     scale_factor: 0.18215
@@ -109,7 +109,7 @@ model:
               params:
                 embed_dim: 4
                 # NEEDS OVERWRITE: replace with your pre-trained pointmap VAE checkpoint path
-                ckpt_path: /fsx-siro/liuzeyi/4dgen/checkpoints/vae/StoreCerealBoxUnderShelf/pointmap.ckpt
+                ckpt_path: /fsx-siro/liuzeyi/4dgen/checkpoints/vae/PlaceAppleFromBowlIntoBin/pointmap.ckpt
                 monitor: val/rec_loss
                 ddconfig:
                   attn_type: vanilla-xformers
@@ -141,7 +141,7 @@ model:
               params:
                 embed_dim: 4
                 # NEEDS OVERWRITE: replace with your pre-trained RGB VAE checkpoint path
-                ckpt_path: /fsx-siro/liuzeyi/4dgen/checkpoints/vae/StoreCerealBoxUnderShelf/rgb.ckpt
+                ckpt_path: /fsx-siro/liuzeyi/4dgen/checkpoints/vae/PlaceAppleFromBowlIntoBin/color.ckpt
                 monitor: val/rec_loss
                 ddconfig:
                   attn_type: vanilla-xformers
@@ -238,7 +238,7 @@ model:
             dropout: 0.0
             video_kernel_size: [3, 1, 1]
         # NEEDS OVERWRITE: replace with your pre-trained pointmap VAE checkpoint path
-        ckpt_path: /fsx-siro/liuzeyi/4dgen/checkpoints/vae/StoreCerealBoxUnderShelf/pointmap.ckpt
+        ckpt_path: /fsx-siro/liuzeyi/4dgen/checkpoints/vae/PlaceAppleFromBowlIntoBin/pointmap.ckpt
     
     first_stage_color_config:
       target: sgm.models.autoencoder.AutoencodingEngine
@@ -277,7 +277,7 @@ model:
             dropout: 0.0
             video_kernel_size: [3, 1, 1]
         # NEEDS OVERWRITE: replace with your pre-trained RGB VAE checkpoint path
-        ckpt_path: /fsx-siro/liuzeyi/4dgen/checkpoints/vae/StoreCerealBoxUnderShelf/rgb.ckpt
+        ckpt_path: /fsx-siro/liuzeyi/4dgen/checkpoints/vae/PlaceAppleFromBowlIntoBin/color.ckpt
 
 dataloader:
   batch_size: 1
