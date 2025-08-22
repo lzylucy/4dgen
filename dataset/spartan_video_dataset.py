@@ -149,7 +149,7 @@ class SpartanBaseDataset(BaseImageDataset):
             assert len(episode_paths) == max_num_episodes
 
         # check if replay buffer already exists
-        if replay_buffer_path is None:
+        if not os.path.exists(replay_buffer_path):
             # load all episodes
             print(f"Building replay buffer from scratch with stride: {stride}")
             replay_buffer = make_replay_buffer(
@@ -169,8 +169,8 @@ class SpartanBaseDataset(BaseImageDataset):
                 has_depth=has_depth,
                 has_label=has_label,
             )
-            # print(f"Save replay buffer to {replay_buffer_path}")
-            # replay_buffer.save_to_path(replay_buffer_path)
+            print(f"Save replay buffer to {replay_buffer_path}")
+            replay_buffer.save_to_path(replay_buffer_path)
         else:
             print(f"Loading replay buffer from: {replay_buffer_path}")
             if replay_buffer_path.startswith("s3://"):

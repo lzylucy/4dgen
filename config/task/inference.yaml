@@ -57,7 +57,7 @@ shape_meta: &shape_meta
 task_name: &task_name bimanual_video_gen
 dataset_path: &dataset_path [
   # NEEDS OVERWRITE: add episode folders here, for example:
-  /projects/m000073/liuzeyi/4dgen/data/BimanualStoreCerealBoxUnderShelf/2025-03-13T04-19-57+00-00/diffusion_spartan/episode_0,
+  /fsx-siro/liuzeyi/4dgen/data/BimanualStoreCerealBoxUnderShelf/2025-03-13T04-19-57+00-00/diffusion_spartan/episode_*
   ]
 
 dataset:
@@ -79,7 +79,7 @@ dataset:
   imagenet_normalization: False
 
   mode: "zarr"
-  replay_buffer_path: null
+  replay_buffer_path: /fsx-siro/liuzeyi/4dgen/data/single_task/store_cereal_box_under_shelf/replay_buffer_infer.zarr
 
   compressor: "blosc"
   is_multiarm: true
