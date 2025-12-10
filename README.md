@@ -3,7 +3,7 @@
 [[Project page]](https://robot4dgen.github.io/)
 [[Paper]](https://arxiv.org/abs/2507.01099)
 [[Dataset]](https://real.stanford.edu/4dgen)
-[Checkpoints (coming soon!)]
+[[Checkpoints]](https://real.stanford.edu/4dgen/checkpoints/)
 
 <p align="center">
 <img width="90%" src="assets/teaser.jpg">
@@ -37,6 +37,11 @@ Tested on Ubuntu 22.04, CUDA Version 12.2.
 We release 50 demonstrations each for 3 tasks StoreCerealBoxUnderShelf, PutSpatulaOnTableFromUtensilCrock, and PlaceAppleFromBowlIntoBin in the Large Behavior Model (LBM) simulation. Each demonstration includes RGB-D observations (and robot actions) from 16 different camera poses, sampled from the upper hemisphere positioned above the workstation. All data can be downloaded [here](https://real.stanford.edu/4dgen/data/).
 
 Checkpoints for pre-trained Stable Video Diffusion (SVD) and VAE can be found [here](https://real.stanford.edu/4dgen/checkpoints/).
+
+In addition, we release fine-tuned VAE encoders for pointmaps and RGB images on our simulation dataset [here](https://real.stanford.edu/4dgen/checkpoints/VAE/), which outputs better latent representations for the specific robotic tasks they're trained on.
+
+Checkpoints for 4D video generation models can be found [here](https://real.stanford.edu/4dgen/checkpoints/outputs/).
+
 
 ## Finetune VAE
 ```console
