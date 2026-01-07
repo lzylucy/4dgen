@@ -182,8 +182,6 @@ class DiffusionSpartanDataModule(LightningDataModule):
         for eps in self._cfg.task.dataset.episode_path_globs:
             print(f"  {eps}")
 
-        # a hack to force rebuild replay_buffer from spartan
-        self._cfg.task.dataset.replay_buffer_path = None
         dataset = hydra.utils.instantiate(self._cfg.task.dataset)
         replay_buffer = dataset.replay_buffer
 
