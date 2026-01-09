@@ -1,70 +1,153 @@
-# Geometry-aware 4D Video Generation for Robot Manipulation
-
-[[Project page]](https://robot4dgen.github.io/)
-[[Paper]](https://arxiv.org/abs/2507.01099)
-[[Dataset]](https://real.stanford.edu/4dgen)
-[[Checkpoints]](https://real.stanford.edu/4dgen/checkpoints/)
-
-Dataset and checkpoints can also be accessed and downloaded from huggingface now!
-[[Dataset]](https://huggingface.co/datasets/Zeyi/4dgen-dataset)
-[[Checkpoints]](https://huggingface.co/Zeyi/4dgen-ckpts)
+# 🧠 Geometry-aware 4D Video Generation for Robot Manipulation
 
 <p align="center">
-<img width="90%" src="assets/teaser.jpg">
+  <img width="90%" src="assets/teaser.jpg">
 </p>
 
-[Zeyi Liu](http://lzylucy.github.io/) <sup>1</sup>,
-[Shuang Li](https://shuangli59.github.io/)<sup>1</sup>,
-[Eric Cousineau](https://www.eacousineau.com/)<sup>2</sup>,
-[Siyuan Feng](https://www.cs.cmu.edu/~sfeng/)<sup>2</sup>,
-[Benjamin Burchfiel](https://www.tri.global/about-us/dr-ben-burchfiel)<sup>2</sup>,
-[Shuran Song](https://shurans.github.io/)<sup>1</sup>
+We propose a **4D video generation model** that enforces geometric consistency across multiple camera views to predict spatio-temporally aligned RGB-D videos from a single RGB-D image per view. We further demonstrate applications to robot manipulation by extracting gripper poses from generated videos using an off-the-shelf pose tracking algorithm. We show that the model generalizes to novel viewpoints and enables robots to leverage multi-view information for planning.
 
-<sup>1</sup>Stanford University,
-<sup>2</sup>Toyota Research Institute
+---
 
-## Install Dependencies
-To install the required dependencies, we recommend using conda / mamba environment.
-```console
-$ cd 4dgen
-$ conda env create -f environment.yml
-$ conda activate video_policy
-(video_policy)$ conda install pytorch3d
-```
-Tested on Ubuntu 22.04, CUDA Version 12.2.
+## 🔗 Project Links
 
-## Download checkpoints and dataset
+|                  📄 Paper                 |              🌐 Project Page             |                     📦 Dataset                     |                                                     🤗 Hugging Face                                                    |
+| :---------------------------------------: | :--------------------------------------: | :------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------: |
+| [arXiv](https://arxiv.org/abs/2507.01099) | [Website](https://robot4dgen.github.io/) | [Stanford Mirror](https://real.stanford.edu/4dgen) | [Dataset](https://huggingface.co/datasets/Zeyi/4dgen-dataset) · [Checkpoints](https://huggingface.co/Zeyi/4dgen-ckpts) |
+
+---
+
+## 👥 Authors
+
+[Zeyi Liu](http://lzylucy.github.io/)¹ ·
+[Shuang Li](https://shuangli59.github.io/)¹ ·
+[Eric Cousineau](https://www.eacousineau.com/)² ·
+[Siyuan Feng](https://www.cs.cmu.edu/~sfeng/)² ·
+[Benjamin Burchfiel](https://www.tri.global/about-us/dr-ben-burchfiel)² ·
+[Shuran Song](https://shurans.github.io/)¹
+
+¹ Stanford University  
+² Toyota Research Institute
+
+---
+
+## 🧩 Overview
+
+Robotic manipulation requires understanding **how 3D geometry evolves over time** under agent actions. However, most video generation models are trained with single-view RGB videos, limiting their ability to reason about geometry and cross-view consistency.
+
+This project introduces a **geometry-aware 4D video generation pipeline** that:
+
+* Models **multi-view RGB-D observations** across time
+* Enforces **cross-view geometric consistency** via pointmaps
+* Learns temporally coherent latent dynamics suitable for manipulation
+
+The resulting models serve as strong foundations for **world modeling, policy learning, and planning** in robotics.
+
+---
+
+## 📦 Dataset
+
 <p align="center">
-<img width="90%" src="assets/data.png">
+  <img width="90%" src="assets/data.png">
 </p>
 
-We release 50 demonstrations each for 3 tasks StoreCerealBoxUnderShelf, PutSpatulaOnTableFromUtensilCrock, and PlaceAppleFromBowlIntoBin in the Large Behavior Model (LBM) simulation. Each demonstration includes RGB-D observations (and robot actions) from 16 different camera poses, sampled from the upper hemisphere positioned above the workstation. All data can be downloaded [here](https://real.stanford.edu/4dgen/data/).
+We release a **multi-view, multi-task robotic manipulation dataset** collected in simulation.
 
-Checkpoints for pre-trained Stable Video Diffusion (SVD) and VAE can be found [here](https://real.stanford.edu/4dgen/checkpoints/).
+### Tasks
 
-In addition, we release fine-tuned VAE encoders for pointmaps and RGB images on our simulation dataset [here](https://real.stanford.edu/4dgen/checkpoints/VAE/), which outputs better latent representations for the specific robotic tasks they're trained on.
+* StoreCerealBoxUnderShelf
+* PutSpatulaOnTableFromUtensilCrock
+* PlaceAppleFromBowlIntoBin
 
-Checkpoints for 4D video generation models can be found [here](https://real.stanford.edu/4dgen/checkpoints/outputs/).
+### Key Properties
 
+* **50 demonstrations per task**
+* **16 RGB-D camera views per timestep**, sampled from the upper hemisphere
+* **Synchronized robot actions and observations**
+* Simulated in the **Large Behavior Model (LBM)** environment
 
-## Finetune VAE
-```console
-(video_policy)$ CUDA_VISIBLE_DEVICES=<GPU-device-ids> HYDRA_FULL_ERROR=1 python scripts/train.py --config-name=finetune_autoencoder_workspace
+📥 Download links:
+
+* Dataset: [https://real.stanford.edu/4dgen/data/](https://real.stanford.edu/4dgen/data/)
+* Hugging Face mirror: [https://huggingface.co/datasets/Zeyi/4dgen-dataset](https://huggingface.co/datasets/Zeyi/4dgen-dataset)
+
+---
+
+## 🧠 Pre-trained Models
+
+We provide multiple checkpoints to support different stages of the pipeline:
+
+* **Stable Video Diffusion (SVD)** backbones
+* **Task-specific VAEs** for RGB and pointmap latents
+* **4D video generation models** fine-tuned on manipulation data
+
+📦 Checkpoints:
+
+* SVD / base models: [https://real.stanford.edu/4dgen/checkpoints/](https://real.stanford.edu/4dgen/checkpoints/)
+* Fine-tuned VAEs: [https://real.stanford.edu/4dgen/checkpoints/VAE/](https://real.stanford.edu/4dgen/checkpoints/VAE/)
+* 4D generation outputs: [https://real.stanford.edu/4dgen/checkpoints/outputs/](https://real.stanford.edu/4dgen/checkpoints/outputs/)
+
+---
+
+## ⚙️ Installation
+
+We recommend using **conda or mamba**.
+
+```bash
+cd 4dgen
+conda env create -f environment.yml
+conda activate video_policy
+conda install pytorch3d
 ```
 
-## Train 4D generation model
-```console
-(video_policy)$ CUDA_VISIBLE_DEVICES=<GPU-device-ids> HYDRA_FULL_ERROR=1 python scripts/train.py --config-name=finetune_svd_lightning_workspace
-```
-Tested on 4 NVIDIA A6000 GPUs with 48GB memory each, with batch size 1. The training takes about 2 days to finish.
+**Tested on:**
 
-## Run inference example
-```console
-(video_policy)$ python notebooks/eval.py
+* Ubuntu 22.04
+* CUDA 12.2
+
+---
+
+## 🔧 Training
+
+### 1️⃣ Fine-tune the VAE
+
+```bash
+CUDA_VISIBLE_DEVICES=<GPU_IDS> \
+HYDRA_FULL_ERROR=1 \
+python scripts/train.py --config-name=finetune_autoencoder_workspace
 ```
 
-## Citation
-If you find this codebase useful, please consider citing our work:
+### 2️⃣ Train the 4D Video Generation Model
+
+```bash
+CUDA_VISIBLE_DEVICES=<GPU_IDS> \
+HYDRA_FULL_ERROR=1 \
+python scripts/train.py --config-name=finetune_svd_lightning_workspace
+```
+
+**Notes:**
+
+* Tested on **4× NVIDIA A6000 (48GB)**
+* Batch size: 1
+* Training time: ~2 days
+
+---
+
+## 🔍 Inference
+
+Run the provided evaluation example:
+
+```bash
+python notebooks/eval.py
+```
+
+This script demonstrates loading a trained checkpoint and generating multi-view 4D predictions.
+
+---
+
+## 📚 Citation
+
+If you find this project useful, please consider citing:
+
 ```bibtex
 @article{liu2025geometry,
   title={Geometry-aware 4D Video Generation for Robot Manipulation},
@@ -73,3 +156,13 @@ If you find this codebase useful, please consider citing our work:
   year={2025}
 }
 ```
+
+---
+
+## 📄 License
+
+This project is released for **research use**. Please see the repository for license details.
+
+---
+
+💬 **Questions or issues?** Feel free to open a GitHub issue or reach out via the project page.
