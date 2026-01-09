@@ -2,13 +2,13 @@
 
 <p align="center">
   <video width="100%" autoplay muted loop playsinline>
-    <source src="videos/teaser.mp4" type="video/mp4">
+    <source src="./videos/teaser.mp4" type="video/mp4">
   </video>
 </p>
 
 <p align="center">
   <video width="100%" autoplay muted loop playsinline>
-    <source src="videos/real.mp4" type="video/mp4">
+    <source src="./videos/real.mp4" type="video/mp4">
   </video>
 </p>
 
@@ -160,30 +160,30 @@ We show representative qualitative results illustrating multi-view RGB-D video g
 #### Task 1
 <p align="center">
   <video width="45%" controls>
-    <source src="videos/results/task_1/rgb_1.mp4" type="video/mp4">
+    <source src="./videos/results/task_1/rgb_1.mp4" type="video/mp4">
   </video>
   <video width="45%" controls>
-    <source src="videos/results/task_1/depth_1.mp4" type="video/mp4">
+    <source src="./videos/results/task_1/depth_1.mp4" type="video/mp4">
   </video>
 </p>
 
 #### Task 2
 <p align="center">
   <video width="45%" controls>
-    <source src="videos/results/task_2/rgb_1.mp4" type="video/mp4">
+    <source src="./videos/results/task_2/rgb_1.mp4" type="video/mp4">
   </video>
   <video width="45%" controls>
-    <source src="videos/results/task_2/depth_1.mp4" type="video/mp4">
+    <source src="./videos/results/task_2/depth_1.mp4" type="video/mp4">
   </video>
 </p>
 
 #### Task 3
 <p align="center">
   <video width="45%" controls>
-    <source src="videos/results/task_3/rgb_2.mp4" type="video/mp4">
+    <source src="./videos/results/task_3/rgb_2.mp4" type="video/mp4">
   </video>
   <video width="45%" controls>
-    <source src="videos/results/task_3/depth_2.mp4" type="video/mp4">
+    <source src="./videos/results/task_3/depth_2.mp4" type="video/mp4">
 
 
 ## 📚 Citation
