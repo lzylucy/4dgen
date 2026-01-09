@@ -1,15 +1,11 @@
 # 🧠 Geometry-aware 4D Video Generation for Robot Manipulation
 
 <p align="center">
-  <video width="100%" autoplay muted loop playsinline>
-    <source src="./videos/teaser.mp4" type="video/mp4">
-  </video>
+  <img width="100%" src="./videos/teaser.gif" alt="4DGen teaser">
 </p>
 
 <p align="center">
-  <video width="100%" autoplay muted loop playsinline>
-    <source src="./videos/real.mp4" type="video/mp4">
-  </video>
+  <img width="100%" src="./videos/real.gif" alt="4DGen real video">
 </p>
 
 We propose a **4D video generation model** that enforces geometric consistency across multiple camera views to predict spatio-temporally aligned RGB-D videos from a single RGB-D image per view. We further demonstrate applications to robot manipulation by extracting gripper poses from generated videos using an off-the-shelf pose tracking algorithm. We show that the model generalizes to novel viewpoints and enables robots to leverage multi-view information for planning.
@@ -159,31 +155,21 @@ We show representative qualitative results illustrating multi-view RGB-D video g
 
 #### Task 1
 <p align="center">
-  <video width="45%" controls>
-    <source src="./videos/results/task_1/rgb_1.mp4" type="video/mp4">
-  </video>
-  <video width="45%" controls>
-    <source src="./videos/results/task_1/depth_1.mp4" type="video/mp4">
-  </video>
+  <img width="45%" src="./videos/results/task_1/rgb_1.gif" alt="Task 1 RGB">
+  <img width="45%" src="./videos/results/task_1/depth_1.gif" alt="Task 1 depth">
 </p>
 
 #### Task 2
 <p align="center">
-  <video width="45%" controls>
-    <source src="./videos/results/task_2/rgb_1.mp4" type="video/mp4">
-  </video>
-  <video width="45%" controls>
-    <source src="./videos/results/task_2/depth_1.mp4" type="video/mp4">
-  </video>
+  <img width="45%" src="./videos/results/task_2/rgb_1.gif" alt="Task 2 RGB">
+  <img width="45%" src="./videos/results/task_2/depth_1.gif" alt="Task 2 depth">
 </p>
 
 #### Task 3
 <p align="center">
-  <video width="45%" controls>
-    <source src="./videos/results/task_3/rgb_2.mp4" type="video/mp4">
-  </video>
-  <video width="45%" controls>
-    <source src="./videos/results/task_3/depth_2.mp4" type="video/mp4">
+  <img width="45%" src="./videos/results/task_3/rgb_2.gif" alt="Task 3 RGB">
+  <img width="45%" src="./videos/results/task_3/depth_2.gif" alt="Task 3 depth">
+</p>
 
 
 ## 📚 Citation
