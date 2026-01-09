@@ -5,6 +5,10 @@
 [[Dataset]](https://real.stanford.edu/4dgen)
 [[Checkpoints]](https://real.stanford.edu/4dgen/checkpoints/)
 
+Dataset and checkpoints can also be accessed and downloaded from huggingface now!
+[[Dataset]](https://huggingface.co/datasets/Zeyi/4dgen-dataset)
+[[Checkpoints]](https://huggingface.co/Zeyi/4dgen-ckpts)
+
 <p align="center">
 <img width="90%" src="assets/teaser.jpg">
 </p>
