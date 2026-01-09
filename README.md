@@ -1,14 +1,15 @@
 # 🧠 Geometry-aware 4D Video Generation for Robot Manipulation
 
-<p align="center">
-  <img width="100%" src="./videos/teaser.gif" alt="4DGen teaser">
-</p>
 
 <p align="center">
-  <img width="100%" src="./videos/real.gif" alt="4DGen real video">
+  <img width="90%" src="./videos/teaser.gif" alt="4DGen teaser">
 </p>
 
 We propose a **4D video generation model** that enforces geometric consistency across multiple camera views to predict spatio-temporally aligned RGB-D videos from a single RGB-D image per view. We further demonstrate applications to robot manipulation by extracting gripper poses from generated videos using an off-the-shelf pose tracking algorithm. We show that the model generalizes to novel viewpoints and enables robots to leverage multi-view information for planning.
+
+<p align="center">
+  <img width="90%" src="./videos/real.gif" alt="4DGen real video">
+</p>
 
 ---
 
