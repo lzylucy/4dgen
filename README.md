@@ -59,16 +59,25 @@ We release a **multi-view, multi-task robotic manipulation dataset** collected i
 
 ### Tasks
 
-* StoreCerealBoxUnderShelf
-* PutSpatulaOnTableFromUtensilCrock
-* PlaceAppleFromBowlIntoBin
+**Simulation tasks (LBM):**
+- StoreCerealBoxUnderShelf  
+- PutSpatulaOnTableFromUtensilCrock  
+- PlaceAppleFromBowlIntoBin  
+
+**Real-world robot manipulation tasks:**
+- BimanualAddOrangeSlicesToBowl  
+- BimanualChopCucumber  
+- BimanualCupOnSaucer  
+- BimanualTwistCapOffBottle  
 
 ### Key Properties
 
-* **50 demonstrations per task**
-* **16 RGB-D camera views per timestep**, sampled from the upper hemisphere
-* **Synchronized robot actions and observations**
-* Simulated in the **Large Behavior Model (LBM)** environment
+- **Simulation:** 50 demonstrations per task  
+- **Real world:** 10 demonstrations per task  
+- **16 RGB-D camera views per timestep**, sampled from the upper hemisphere  
+- **Synchronized robot actions and observations**  
+- Simulation data collected in the **Large Behavior Model (LBM)** environment
+
 
 📥 Download links:
 
